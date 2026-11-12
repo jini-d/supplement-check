@@ -51,12 +51,33 @@ body {
 
 .bg-blob {
   background:
-    radial-gradient(40rem 28rem at 85% -5%, rgba(255, 196, 160, 0.45), transparent 60%),
-    radial-gradient(36rem 26rem at -10% 10%, rgba(140, 214, 190, 0.45), transparent 60%),
-    radial-gradient(30rem 30rem at 50% 110%, rgba(196, 220, 255, 0.35), transparent 60%);
+    radial-gradient(40rem 28rem at 85% -5%, rgba(233, 214, 178, 0.35), transparent 60%),
+    radial-gradient(36rem 26rem at -10% 10%, rgba(170, 214, 196, 0.35), transparent 60%),
+    radial-gradient(30rem 30rem at 50% 110%, rgba(210, 222, 216, 0.4), transparent 60%);
 }
 .glass {
   background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+}
+
+.capsule {
+  border-radius: 9999px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06));
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.25), 0 14px 30px -12px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+.capsule-gold {
+  background: linear-gradient(160deg, #f1dcae, #c9984f);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+@keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -8px; } }
+.float-a { animation: float 6s ease-in-out infinite; }
+.float-b { animation: float 7s ease-in-out -2s infinite; }
+.float-c { animation: float 8s ease-in-out -4s infinite; }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.grow-bar { transform-origin: left; animation: grow 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .float-a, .float-b, .float-c, .grow-bar { animation: none; }
 }

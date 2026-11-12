@@ -29,7 +29,7 @@ const emptyIngredient = (): Ingredient => ({ nutrientId: "", amount: 0, unit: ""
 const emptySupplement = (): Supplement => ({ id: uid(), name: "", ingredients: [emptyIngredient()] });
 
 // 영양제 카드마다 다른 색 캡슐 아이콘
-const CAPSULE = ["bg-emerald-100 text-emerald-700", "bg-orange-100 text-orange-700", "bg-sky-100 text-sky-700", "bg-violet-100 text-violet-700", "bg-rose-100 text-rose-700"];
+const CAPSULE = ["bg-[#e3efe9] text-[#0f5c4d]", "bg-[#f3ead8] text-[#9a6b23]", "bg-[#e6ebf0] text-[#3d5566]", "bg-[#ece7ef] text-[#5d4a6b]", "bg-[#f2e6e3] text-[#8a4b3f]"];
 
 const EXAMPLE: Supplement[] = [
   {
@@ -115,8 +115,8 @@ export function Checker() {
           <h1 className="mt-5 text-[28px] font-bold leading-[1.25] tracking-tight sm:text-[40px]">
             같이 먹는 영양제,
             <br />
-            <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-orange-500 bg-clip-text text-transparent">
-              겹치거나 너무 많지 않을까?
+            <span className="text-primary">
+              겹치거나 <span className="bg-[linear-gradient(transparent_62%,rgba(212,175,106,0.35)_62%)]">너무 많지</span> 않을까?
             </span>
           </h1>
           <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
@@ -129,6 +129,7 @@ export function Checker() {
               </li>
             ))}
           </ul>
+          <HeroVisual />
         </header>
 
         {/* 1. 기본 정보 */}
@@ -313,20 +314,21 @@ export function Checker() {
         <Notice />
       </div>
 
-      {/* 하단 고정 버튼 */}
+      {/* 하단 고정 버튼: 성분을 하나라도 넣으면 나타남 */}
+      {filledCount > 0 && (
       <div className="fixed inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background via-background/90 to-transparent px-4 pb-5 pt-8">
         <div className="mx-auto max-w-3xl">
           <Button
             size="lg"
-            className="h-14 w-full rounded-2xl bg-gradient-to-r from-emerald-800 to-teal-700 text-base shadow-lg shadow-emerald-900/15"
-            disabled={filledCount === 0}
+            className="h-14 w-full rounded-2xl bg-[#0f3d34] text-base tracking-tight shadow-[0_12px_30px_-10px_rgba(15,61,52,0.55)] hover:bg-[#0c332b]"
             onClick={showResult}
           >
-            {filledCount === 0 ? "성분을 넣으면 결과를 볼 수 있어요" : `영양제 ${filledCount}개 결과 보기`}
-            {filledCount > 0 && <ArrowRight className="size-5" aria-hidden />}
+            영양제 {filledCount}개 결과 보기
+            <ArrowRight className="size-5" aria-hidden />
           </Button>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -522,4 +524,67 @@ function Notice() {
 
 function fmt(x: number) {
   return x.toLocaleString("ko-KR", { maximumFractionDigits: 2 });
+}
+
+/** 첫 화면 그래픽: 두 제품의 아연이 쌓여 상한선을 넘는 모습을 예시로 보여 준다 */
+function HeroVisual() {
+  const UL = 35;
+  const max = 45;
+  const parts = [
+    { label: "종합비타민", amount: 8.5, cls: "from-[#cfe8dc] to-[#a9d4c2]" },
+    { label: "아연·마그네슘", amount: 30, cls: "from-[#e9cf9a] to-[#d4a55a]" },
+  ];
+  const total = parts.reduce((a, b) => a + b.amount, 0);
+  return (
+    <figure
+      className="relative mt-8 overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0a2621] via-[#0e3a32] to-[#155446] p-6 text-white shadow-[0_20px_50px_-20px_rgba(15,92,77,0.6)] sm:p-8"
+      aria-label="예시: 종합비타민 아연 8.5mg과 아연·마그네슘 30mg을 같이 먹으면 합계 38.5mg으로 상한 35mg의 110%"
+    >
+      {/* 떠 있는 캡슐 장식 */}
+      <span aria-hidden className="capsule float-a absolute -right-5 top-7 h-11 w-28 rotate-[-28deg]" />
+      <span aria-hidden className="capsule capsule-gold float-b absolute right-28 -top-3 h-7 w-16 rotate-[18deg]" />
+      <span aria-hidden className="capsule float-c absolute -bottom-4 right-12 h-8 w-20 rotate-[12deg] opacity-70" />
+      <span aria-hidden className="absolute -left-16 -top-16 size-48 rounded-full bg-emerald-300/20 blur-3xl" />
+
+      <figcaption className="relative">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-emerald-100 ring-1 ring-white/15">
+          예시 · 아연
+        </span>
+        <p className="mt-3 text-lg font-bold leading-snug sm:text-xl">
+          따로 보면 괜찮은데,
+          <br />
+          합치면 <span className="text-[#e9c98a]">상한 110%</span>
+        </p>
+      </figcaption>
+
+      <div className="relative mt-7" aria-hidden>
+        <div className="relative h-11 rounded-2xl bg-white/10 p-1 ring-1 ring-white/10">
+          <div className="flex h-full gap-1">
+            {parts.map((p, i) => (
+              <div
+                key={p.label}
+                className={cn("grow-bar h-full rounded-xl bg-gradient-to-r", p.cls)}
+                style={{ width: `${(p.amount / max) * 100}%`, animationDelay: `${0.25 + i * 0.35}s` }}
+              />
+            ))}
+          </div>
+          {/* 상한선 */}
+          <div className="absolute -bottom-2 -top-2 w-0.5 rounded bg-white" style={{ left: `${(UL / max) * 100}%` }}>
+            <span className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#0f4a3e]">
+              상한 {UL}mg
+            </span>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-emerald-50/90">
+          {parts.map((p) => (
+            <span key={p.label} className="inline-flex items-center gap-1.5">
+              <span className={cn("size-2.5 rounded-full bg-gradient-to-r", p.cls)} />
+              {p.label} {p.amount}mg
+            </span>
+          ))}
+          <span className="ml-auto font-semibold text-white">합계 {total}mg</span>
+        </div>
+      </div>
+    </figure>
+  );
 }
