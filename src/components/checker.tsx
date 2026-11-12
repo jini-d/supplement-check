@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  CircleHelp,
   Copy,
   Info,
   Layers,
@@ -19,8 +20,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, NativeSelect } from "@/components/ui/input";
-import { NUTRIENTS, NUTRIENT_MAP, SOURCE_LABEL, type AgeGroup, type Sex } from "@/data/nutrients";
-import { calculate, NEAR_RATIO, type Ingredient, type Profile, type ResultRow, type Supplement } from "@/lib/calc";
+import { NUTRIENTS, NUTRIENT_MAP, SOURCE_LABEL, TYPICAL, type AgeGroup, type Sex } from "@/data/nutrients";
+import { calculate, isFilled, NEAR_RATIO, type Ingredient, type Profile, type ResultRow, type Supplement } from "@/lib/calc";
 import { decodeState, encodeState } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +52,14 @@ const EXAMPLE: Supplement[] = [
       { nutrientId: "magnesium", amount: 250, unit: "mg" },
     ],
   },
+  {
+    id: "ex4",
+    name: "예시) 비타민B 컴플렉스",
+    ingredients: [
+      { nutrientId: "vitB6", amount: 0, unit: "mg", unknown: true },
+      { nutrientId: "vitB12", amount: 500, unit: "µg" },
+    ],
+  },
 ];
 
 export function Checker() {
@@ -74,7 +83,7 @@ export function Checker() {
   }, []);
 
   const results = useMemo(() => calculate(supplements, profile), [supplements, profile]);
-  const filledCount = supplements.filter((s) => s.ingredients.some((i) => i.nutrientId && i.amount > 0)).length;
+  const filledCount = supplements.filter((s) => s.ingredients.some(isFilled)).length;
 
   const updateSupplement = (id: string, patch: Partial<Supplement>) =>
     setSupplements((list) => list.map((s) => (s.id === id ? { ...s, ...patch } : s)));
@@ -163,7 +172,7 @@ export function Checker() {
         <Section
           step={2}
           title="먹고 있는 영양제"
-          desc="제품 라벨의 ‘1일 섭취량 기준’ 함량을 넣어 주세요."
+          desc="라벨의 ‘1일 섭취량 기준’ 함량을 넣어 주세요. 함량을 모르면 성분만 넣어도 겹치는지는 볼 수 있어요."
           action={
             <Button
               variant="ghost"
@@ -208,11 +217,10 @@ export function Checker() {
                 <div className="mt-3 space-y-2">
                   {s.ingredients.map((ing, iIdx) => {
                     const n = NUTRIENT_MAP[ing.nutrientId];
+                    const typical = TYPICAL[ing.nutrientId] ?? [];
                     return (
-                      <div
-                        key={iIdx}
-                        className="grid grid-cols-[1fr_1fr_36px] gap-2 rounded-xl bg-muted/40 p-2 sm:grid-cols-[1fr_120px_110px_36px] sm:bg-transparent sm:p-0"
-                      >
+                      <div key={iIdx} className="rounded-xl bg-muted/40 p-2 sm:bg-transparent sm:p-0">
+                      <div className="grid grid-cols-[1fr_1fr_36px] gap-2 sm:grid-cols-[1fr_120px_110px_36px]">
                         <NativeSelect
                           className="col-span-3 h-11 rounded-xl bg-white sm:col-span-1"
                           aria-label="성분"
@@ -235,15 +243,16 @@ export function Checker() {
                           type="number"
                           inputMode="decimal"
                           min={0}
-                          placeholder="함량"
-                          value={ing.amount || ""}
+                          placeholder={ing.unknown ? "모름" : "함량"}
+                          disabled={ing.unknown}
+                          value={ing.unknown ? "" : ing.amount || ""}
                           onChange={(e) => updateIngredient(s.id, iIdx, { amount: Number(e.target.value) })}
                         />
                         <NativeSelect
                           className="h-11 rounded-xl bg-white"
                           aria-label="단위"
                           value={ing.unit}
-                          disabled={!n}
+                          disabled={!n || ing.unknown}
                           onChange={(e) => updateIngredient(s.id, iIdx, { unit: e.target.value })}
                         >
                           {n ? n.units.map((u) => <option key={u.label}>{u.label}</option>) : <option value="">단위</option>}
@@ -258,6 +267,45 @@ export function Checker() {
                         >
                           <X />
                         </Button>
+                      </div>
+                      {n && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 pb-1 text-xs sm:pl-1">
+                          <label className="mr-1 inline-flex cursor-pointer items-center gap-1.5 font-medium text-muted-foreground">
+                            <input
+                              type="checkbox"
+                              className="size-4 accent-[#0f5c4d]"
+                              checked={!!ing.unknown}
+                              onChange={(e) => {
+                                updateIngredient(s.id, iIdx, { unknown: e.target.checked });
+                                if (e.target.checked) track("amount_unknown_checked", { nutrient: ing.nutrientId });
+                              }}
+                            />
+                            용량 모름
+                          </label>
+                          {typical.length > 0 && (
+                            <>
+                              <span className="text-muted-foreground/70">흔한 함량</span>
+                              {typical.map((t) => (
+                                <button
+                                  key={t.amount + t.unit}
+                                  type="button"
+                                  className={cn(
+                                    "rounded-full border bg-white px-2.5 py-1 font-medium text-foreground/80 transition-colors hover:border-primary/40 hover:text-primary",
+                                    !ing.unknown && ing.amount === t.amount && ing.unit === t.unit && "border-primary/50 bg-secondary text-primary",
+                                  )}
+                                  onClick={() => {
+                                    updateIngredient(s.id, iIdx, { amount: t.amount, unit: t.unit, unknown: false });
+                                    track("typical_dose_used", { nutrient: ing.nutrientId });
+                                  }}
+                                >
+                                  {fmt(t.amount)}
+                                  {t.unit} <span className="text-muted-foreground">· {t.hint}</span>
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )}
                       </div>
                     );
                   })}
@@ -434,6 +482,7 @@ const STATUS = {
   near: { text: "상한섭취량에 가까워요", chip: "bg-amber-100 text-amber-900", ring: "#d97706", icon: TrendingUp },
   ok: { text: "상한섭취량 안쪽이에요", chip: "bg-emerald-100 text-emerald-800", ring: "#059669", icon: CheckCircle2 },
   none: { text: "상한섭취량 기준이 없는 성분", chip: "bg-slate-100 text-slate-700", ring: "#94a3b8", icon: Info },
+  unknown: { text: "용량 확인이 필요해요", chip: "bg-slate-100 text-slate-700", ring: "#94a3b8", icon: CircleHelp },
 } as const;
 
 function Gauge({ pct, color }: { pct?: number; color: string }) {
@@ -467,7 +516,8 @@ function Gauge({ pct, color }: { pct?: number; color: string }) {
 function ResultItem({ row }: { row: ResultRow }) {
   const st = STATUS[row.status];
   const Icon = st.icon;
-  const pct = row.ratio !== undefined ? Math.round(row.ratio * 100) : undefined;
+  const pct = row.ratio !== undefined && row.total > 0 ? Math.round(row.ratio * 100) : undefined;
+  const partial = row.unknownSources.length > 0 && row.total > 0;
   return (
     <article className="flex gap-4 rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(20,32,29,0.04)] sm:p-5">
       <Gauge pct={pct} color={st.ring} />
@@ -484,7 +534,8 @@ function ResultItem({ row }: { row: ResultRow }) {
           )}
         </div>
         <p className="mt-1.5 text-sm">
-          합계 <b>{fmt(row.total)} {row.baseUnit}</b>
+          {partial ? "아는 것만 더해서 " : "합계 "}
+          <b>{row.total === 0 && row.unknownSources.length > 0 ? "?" : `${fmt(row.total)} ${row.baseUnit}`}</b>
           {row.ul !== undefined && (
             <span className="text-muted-foreground">
               {" "}
@@ -497,9 +548,16 @@ function ResultItem({ row }: { row: ResultRow }) {
           {row.sources.map((src) => (
             <span key={src} className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               {src}
+              {row.unknownSources.includes(src) && " (용량 모름)"}
             </span>
           ))}
         </div>
+        {row.unknownSources.length > 0 && (
+          <p className="mt-1.5 text-xs font-medium text-amber-800">
+            {partial ? "용량을 모르는 제품이 있어 실제 합계는 이보다 많아요. " : ""}
+            라벨을 확인하면 정확하게 볼 수 있어요.
+          </p>
+        )}
         {row.ulNote && <p className="mt-1.5 text-xs text-muted-foreground">{row.ulNote}</p>}
       </div>
     </article>

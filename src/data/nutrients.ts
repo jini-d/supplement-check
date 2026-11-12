@@ -93,3 +93,55 @@ export function getUl(n: Nutrient, sex: Sex, age: AgeGroup): number | undefined 
 }
 
 export const SOURCE_LABEL = "보건복지부·한국영양학회, 2025 한국인 영양소 섭취기준 (성인 19~64세)";
+
+/**
+ * 라벨을 바로 못 볼 때 고를 수 있는 "흔히 보이는 함량".
+ * 특정 제품 값이 아니라 시중 제품에서 자주 보이는 함량대를 고른 참고값이다.
+ */
+export type TypicalDose = { amount: number; unit: string; hint: string };
+
+export const TYPICAL: Record<string, TypicalDose[]> = {
+  vitD: [
+    { amount: 400, unit: "IU", hint: "종합비타민" },
+    { amount: 1000, unit: "IU", hint: "단일제" },
+    { amount: 2000, unit: "IU", hint: "고함량" },
+  ],
+  vitC: [
+    { amount: 100, unit: "mg", hint: "종합비타민" },
+    { amount: 1000, unit: "mg", hint: "단일제" },
+  ],
+  vitE: [{ amount: 11, unit: "mg α-TE", hint: "종합비타민" }],
+  vitB6: [
+    { amount: 1.5, unit: "mg", hint: "종합비타민" },
+    { amount: 50, unit: "mg", hint: "고함량 B군" },
+  ],
+  folate: [{ amount: 400, unit: "µg", hint: "종합·임신 준비" }],
+  vitB12: [
+    { amount: 2.4, unit: "µg", hint: "종합비타민" },
+    { amount: 500, unit: "µg", hint: "고함량 B군" },
+  ],
+  biotin: [
+    { amount: 30, unit: "µg", hint: "종합비타민" },
+    { amount: 5000, unit: "µg", hint: "모발용 고함량" },
+  ],
+  calcium: [
+    { amount: 210, unit: "mg", hint: "종합비타민" },
+    { amount: 500, unit: "mg", hint: "칼슘제" },
+  ],
+  magnesium: [
+    { amount: 100, unit: "mg", hint: "종합·칼슘 복합" },
+    { amount: 350, unit: "mg", hint: "마그네슘 단일제" },
+  ],
+  iron: [
+    { amount: 12, unit: "mg", hint: "종합비타민" },
+    { amount: 30, unit: "mg", hint: "철분제" },
+  ],
+  zinc: [
+    { amount: 8.5, unit: "mg", hint: "종합비타민" },
+    { amount: 30, unit: "mg", hint: "아연 단일제" },
+  ],
+  selenium: [
+    { amount: 55, unit: "µg", hint: "종합비타민" },
+    { amount: 200, unit: "µg", hint: "셀레늄 단일제" },
+  ],
+};

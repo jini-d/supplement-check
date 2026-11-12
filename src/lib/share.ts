@@ -2,14 +2,14 @@ import type { Profile, Supplement } from "@/lib/calc";
 
 /**
  * 결과를 서버 없이 공유하기 위해 입력 내용을 URL 해시에 담는다.
- * 짧게 만들려고 키를 줄인 형태로 저장한다.
+ * 짧게 만들려고 키를 줄인 형태로 저장한다. 함량 -1은 "용량 모름"이다.
  */
 type Packed = { p: [Profile["sex"], Profile["age"]]; s: [string, [string, number, string][]][] };
 
 export function encodeState(profile: Profile, supplements: Supplement[]): string {
   const packed: Packed = {
     p: [profile.sex, profile.age],
-    s: supplements.map((s) => [s.name, s.ingredients.map((i) => [i.nutrientId, i.amount, i.unit])]),
+    s: supplements.map((s) => [s.name, s.ingredients.map((i) => [i.nutrientId, i.unknown ? -1 : i.amount, i.unit])]),
   };
   const json = JSON.stringify(packed);
   const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json)));
@@ -26,7 +26,7 @@ export function decodeState(hash: string): { profile: Profile; supplements: Supp
       supplements: packed.s.map(([name, ings], idx) => ({
         id: `s${idx}-${Date.now()}`,
         name,
-        ingredients: ings.map(([nutrientId, amount, unit]) => ({ nutrientId, amount, unit })),
+        ingredients: ings.map(([nutrientId, amount, unit]) => (amount === -1 ? { nutrientId, amount: 0, unit, unknown: true } : { nutrientId, amount, unit })),
       })),
     };
   } catch {
