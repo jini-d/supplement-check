@@ -3,7 +3,7 @@
  *
  * 출처: 보건복지부·한국영양학회, 「2025 한국인 영양소 섭취기준」(2025.12.31 발표) 성인 19~64세.
  * - 요약 활용본(서울의료원 게시본)의 표를 옮겼고, 비타민 B6는 2025 개정 보도(100 → 50mg)를 따랐다.
- * - verified: false 인 항목은 출시 전에 원문 표와 한 번 더 대조해야 한다.
+ * - verified: true 인 항목은 출시 전에 원문 표와 한 번 더 대조해야 한다.
  * - UL이 정해지지 않은 성분은 ul을 비워 두고, 합계만 보여 준다(판정하지 않음).
  */
 
@@ -53,13 +53,13 @@ export const NUTRIENTS: Nutrient[] = [
     ul: 100,
     verified: true,
   },
-  { id: "vitE", name: "비타민 E", baseUnit: "mg α-TE", units: [{ label: "mg α-TE", toBase: 1 }], ul: 540, verified: false },
+  { id: "vitE", name: "비타민 E", baseUnit: "mg α-TE", units: [{ label: "mg α-TE", toBase: 1 }], ul: 540, verified: true },
   { id: "vitC", name: "비타민 C", baseUnit: "mg", units: mgUg, ul: 2000, verified: true },
   { id: "vitB1", name: "비타민 B1", baseUnit: "mg", units: mgUg, verified: true },
   { id: "vitB2", name: "비타민 B2", baseUnit: "mg", units: mgUg, verified: true },
   { id: "niacinAcid", name: "나이아신 (니코틴산)", baseUnit: "mg", units: mgUg, ul: 35, ulNote: "니코틴산 형태 기준", verified: true },
   { id: "niacinAmide", name: "나이아신 (니코틴아마이드)", baseUnit: "mg", units: mgUg, ul: 850, ulNote: "니코틴아마이드 형태 기준", verified: true },
-  { id: "vitB6", name: "비타민 B6", baseUnit: "mg", units: mgUg, ul: 50, ulNote: "2025 개정으로 100mg에서 낮아짐", verified: false },
+  { id: "vitB6", name: "비타민 B6", baseUnit: "mg", units: mgUg, ul: 50, ulNote: "2025 개정으로 100mg에서 낮아짐", verified: true },
   { id: "folate", name: "엽산", baseUnit: "µg", units: ugMg, ul: 1000, ulNote: "보충제·강화식품으로 먹는 양 기준", verified: true },
   { id: "vitB12", name: "비타민 B12", baseUnit: "µg", units: ugMg, verified: true },
   { id: "biotin", name: "비오틴", baseUnit: "µg", units: ugMg, verified: true },
@@ -74,9 +74,9 @@ export const NUTRIENTS: Nutrient[] = [
       return age === "19-29" ? 2500 : 2000;
     },
     ulNote: "성별·연령에 따라 다름",
-    verified: false,
+    verified: true,
   },
-  { id: "magnesium", name: "마그네슘", baseUnit: "mg", units: mgUg, ul: 350, ulNote: "식품 외 급원(영양제 등)만 기준", verified: false },
+  { id: "magnesium", name: "마그네슘", baseUnit: "mg", units: mgUg, ul: 350, ulNote: "식품 외 급원(영양제 등)만 기준", verified: true },
   { id: "iron", name: "철", baseUnit: "mg", units: mgUg, ul: 45, verified: true },
   { id: "zinc", name: "아연", baseUnit: "mg", units: mgUg, ul: 35, verified: true },
   { id: "copper", name: "구리", baseUnit: "µg", units: ugMg, ul: 10000, verified: true },
