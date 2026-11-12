@@ -2,7 +2,8 @@ import { NUTRIENT_MAP, getUl, type AgeGroup, type Sex } from "@/data/nutrients";
 
 /** unknown: 용량을 몰라서 성분만 넣은 경우. 겹침에는 세고 합계에는 넣지 않는다. */
 export type Ingredient = { nutrientId: string; amount: number; unit: string; unknown?: boolean };
-export type Supplement = { id: string; name: string; ingredients: Ingredient[] };
+/** note: 제품 검색으로 채웠을 때 보여 줄 안내(표시량 기준 단위, 섭취 방법 등). 공유 링크에는 담지 않는다 */
+export type Supplement = { id: string; name: string; ingredients: Ingredient[]; note?: string };
 export type Profile = { sex: Sex; age: AgeGroup };
 
 /** 상한에 가깝다고 보는 비율. 기획 제안값이며 출시 전에 확정한다. */

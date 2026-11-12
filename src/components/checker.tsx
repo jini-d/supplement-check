@@ -12,6 +12,7 @@ import {
   Layers,
   Pill,
   Plus,
+  Search,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, NativeSelect } from "@/components/ui/input";
+import { ProductSearch, type Product } from "@/components/product-search";
 import { NUTRIENTS, NUTRIENT_MAP, SOURCE_LABEL, TYPICAL, type AgeGroup, type Sex } from "@/data/nutrients";
 import { calculate, isFilled, NEAR_RATIO, type Ingredient, type Profile, type ResultRow, type Supplement } from "@/lib/calc";
 import { decodeState, encodeState } from "@/lib/share";
@@ -67,6 +69,23 @@ export function Checker() {
   const [supplements, setSupplements] = useState<Supplement[]>([emptySupplement()]);
   const [shown, setShown] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [searchingFor, setSearchingFor] = useState<string | null>(null);
+
+  const pickProduct = (sid: string, p: Product) => {
+    const per = [...new Set(p.ingredients.map((i) => i.per))].join(", ");
+    const notes = [
+      `식약처 신고 표시량(${per} 기준)으로 채웠어요.`,
+      p.intake && `섭취 방법: ${p.intake.trim()}.`,
+      "하루에 먹는 양과 다르면 함량을 고쳐 주세요.",
+      p.skipped.length > 0 && `자동으로 못 채운 성분: ${p.skipped.join(", ")}`,
+    ].filter(Boolean);
+    updateSupplement(sid, {
+      name: p.name,
+      ingredients: p.ingredients.map(({ nutrientId, amount, unit }) => ({ nutrientId, amount, unit })),
+      note: notes.join(" "),
+    });
+    setSearchingFor(null);
+  };
   const resultRef = useRef<HTMLDivElement>(null);
 
   // 공유 링크로 들어오면 입력 내용을 복원하고 결과를 바로 보여 준다
@@ -201,6 +220,16 @@ export function Checker() {
                     onChange={(e) => updateSupplement(s.id, { name: e.target.value })}
                     className="h-11 rounded-xl border-transparent bg-muted/60 font-semibold focus-visible:bg-white"
                   />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-11 shrink-0 rounded-xl bg-white px-3 text-primary"
+                    aria-label="제품명으로 찾기"
+                    aria-expanded={searchingFor === s.id}
+                    onClick={() => setSearchingFor(searchingFor === s.id ? null : s.id)}
+                  >
+                    <Search /> <span className="hidden sm:inline">제품 찾기</span>
+                  </Button>
                   {supplements.length > 1 && (
                     <Button
                       variant="ghost"
@@ -213,6 +242,13 @@ export function Checker() {
                     </Button>
                   )}
                 </div>
+
+                {searchingFor === s.id && (
+                  <ProductSearch onPick={(p) => pickProduct(s.id, p)} onClose={() => setSearchingFor(null)} />
+                )}
+                {s.note && (
+                  <p className="mt-3 rounded-lg bg-[#f6efe0] px-3 py-2 text-xs leading-relaxed text-[#6b4f1d]">{s.note}</p>
+                )}
 
                 <div className="mt-3 space-y-2">
                   {s.ingredients.map((ing, iIdx) => {
