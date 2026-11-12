@@ -2,11 +2,23 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
-import { AlertTriangle, CheckCircle2, Copy, Info, Layers, Plus, Sparkles, Trash2, TrendingUp, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Copy,
+  Info,
+  Layers,
+  Pill,
+  Plus,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  TrendingUp,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input, NativeSelect } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { NUTRIENTS, NUTRIENT_MAP, SOURCE_LABEL, type AgeGroup, type Sex } from "@/data/nutrients";
 import { calculate, NEAR_RATIO, type Ingredient, type Profile, type ResultRow, type Supplement } from "@/lib/calc";
 import { decodeState, encodeState } from "@/lib/share";
@@ -15,6 +27,9 @@ import { cn } from "@/lib/utils";
 const uid = () => Math.random().toString(36).slice(2, 9);
 const emptyIngredient = (): Ingredient => ({ nutrientId: "", amount: 0, unit: "" });
 const emptySupplement = (): Supplement => ({ id: uid(), name: "", ingredients: [emptyIngredient()] });
+
+// 영양제 카드마다 다른 색 캡슐 아이콘
+const CAPSULE = ["bg-emerald-100 text-emerald-700", "bg-orange-100 text-orange-700", "bg-sky-100 text-sky-700", "bg-violet-100 text-violet-700", "bg-rose-100 text-rose-700"];
 
 const EXAMPLE: Supplement[] = [
   {
@@ -90,186 +105,297 @@ export function Checker() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-24 pt-10 sm:pt-14">
-      <header className="mb-8">
-        <p className="text-sm font-semibold text-primary">영양제 조합 체크</p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">같이 먹는 영양제, 겹치거나 너무 많지 않을까?</h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-          라벨에 적힌 성분과 함량을 넣으면 성분별 합계, 여러 제품에 겹치는 성분, 하루 상한섭취량 대비 비율을 한 번에 보여 드려요.
-        </p>
-      </header>
+    <div className="bg-blob min-h-dvh">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-32 pt-10 sm:pt-16">
+        {/* 히어로 */}
+        <header className="mb-10">
+          <span className="glass inline-flex items-center gap-1.5 rounded-full border border-white/70 px-3 py-1 text-xs font-semibold text-primary shadow-sm">
+            <ShieldCheck className="size-3.5" aria-hidden /> 2025 한국인 영양소 섭취기준 반영
+          </span>
+          <h1 className="mt-5 text-[28px] font-bold leading-[1.25] tracking-tight sm:text-[40px]">
+            같이 먹는 영양제,
+            <br />
+            <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-orange-500 bg-clip-text text-transparent">
+              겹치거나 너무 많지 않을까?
+            </span>
+          </h1>
+          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-muted-foreground sm:text-base">
+            라벨의 성분과 함량을 넣으면 성분별 합계, 여러 제품에 겹치는 성분, 하루 상한섭취량 대비 비율을 한 번에 보여 드려요.
+          </p>
+          <ul className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-foreground/80">
+            {["로그인 없이 1분", "IU·µg·mg 자동 환산", "결과 링크로 공유"].map((t) => (
+              <li key={t} className="glass rounded-full border border-white/70 px-3 py-1.5 shadow-sm">
+                {t}
+              </li>
+            ))}
+          </ul>
+        </header>
 
-      {/* 1. 기본 정보 */}
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>1. 기본 정보</CardTitle>
-          <CardDescription>칼슘처럼 성별·나이에 따라 상한섭취량이 다른 성분이 있어요.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-3">
-          <label className="text-sm">
-            <span className="mb-1.5 block font-medium">성별</span>
-            <NativeSelect value={profile.sex} onChange={(e) => setProfile({ ...profile, sex: e.target.value as Sex })}>
-              <option value="female">여성</option>
-              <option value="male">남성</option>
-            </NativeSelect>
-          </label>
-          <label className="text-sm">
-            <span className="mb-1.5 block font-medium">나이</span>
-            <NativeSelect value={profile.age} onChange={(e) => setProfile({ ...profile, age: e.target.value as AgeGroup })}>
-              <option value="19-29">19~29세</option>
-              <option value="30-49">30~49세</option>
-              <option value="50-64">50~64세</option>
-            </NativeSelect>
-          </label>
-        </CardContent>
-      </Card>
+        {/* 1. 기본 정보 */}
+        <Section step={1} title="기본 정보" desc="칼슘처럼 성별·나이에 따라 상한섭취량이 다른 성분이 있어요.">
+          <div className="grid grid-cols-2 gap-3">
+            <Segmented
+              label="성별"
+              value={profile.sex}
+              options={[
+                { value: "female", label: "여성" },
+                { value: "male", label: "남성" },
+              ]}
+              onChange={(v) => setProfile({ ...profile, sex: v as Sex })}
+            />
+            <label className="text-sm">
+              <span className="mb-1.5 block font-medium text-muted-foreground">나이</span>
+              <NativeSelect
+                className="h-11 rounded-xl bg-white"
+                value={profile.age}
+                onChange={(e) => setProfile({ ...profile, age: e.target.value as AgeGroup })}
+              >
+                <option value="19-29">19~29세</option>
+                <option value="30-49">30~49세</option>
+                <option value="50-64">50~64세</option>
+              </NativeSelect>
+            </label>
+          </div>
+        </Section>
 
-      {/* 2. 영양제 입력 */}
-      <div className="mb-3 flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold">2. 먹고 있는 영양제</h2>
-          <p className="mt-1 text-sm text-muted-foreground">제품 라벨의 &lsquo;1일 섭취량 기준&rsquo; 함량을 넣어 주세요.</p>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setSupplements(EXAMPLE.map((s) => ({ ...s, id: uid() })));
-            track("example_loaded");
-          }}
+        {/* 2. 영양제 입력 */}
+        <Section
+          step={2}
+          title="먹고 있는 영양제"
+          desc="제품 라벨의 ‘1일 섭취량 기준’ 함량을 넣어 주세요."
+          action={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full text-primary"
+              onClick={() => {
+                setSupplements(EXAMPLE.map((s) => ({ ...s, id: uid() })));
+                track("example_loaded");
+              }}
+            >
+              <Sparkles /> 예시로 채우기
+            </Button>
+          }
         >
-          <Sparkles /> 예시로 채우기
-        </Button>
-      </div>
-
-      <div className="space-y-3">
-        {supplements.map((s, sIdx) => (
-          <Card key={s.id}>
-            <CardContent className="space-y-3 pt-5">
-              <div className="flex items-center gap-2">
-                <Input
-                  aria-label={`영양제 ${sIdx + 1} 이름`}
-                  placeholder={`영양제 ${sIdx + 1} 이름 (예: 종합비타민)`}
-                  value={s.name}
-                  onChange={(e) => updateSupplement(s.id, { name: e.target.value })}
-                  className="font-medium"
-                />
-                {supplements.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`영양제 ${sIdx + 1} 삭제`}
-                    onClick={() => setSupplements((list) => list.filter((x) => x.id !== s.id))}
-                  >
-                    <Trash2 />
-                  </Button>
-                )}
-              </div>
-
-              {s.ingredients.map((ing, iIdx) => {
-                const n = NUTRIENT_MAP[ing.nutrientId];
-                return (
-                  <div key={iIdx} className="grid grid-cols-[1fr_1fr_36px] gap-2 border-t pt-3 first-of-type:border-t-0 sm:grid-cols-[1fr_120px_110px_36px] sm:border-t-0 sm:pt-0">
-                    <NativeSelect
-                      className="col-span-3 sm:col-span-1"
-                      aria-label="성분"
-                      value={ing.nutrientId}
-                      onChange={(e) => {
-                        const next = NUTRIENT_MAP[e.target.value];
-                        updateIngredient(s.id, iIdx, { nutrientId: e.target.value, unit: next?.units[0].label ?? "" });
-                      }}
-                    >
-                      <option value="">성분 선택</option>
-                      {NUTRIENTS.map((x) => (
-                        <option key={x.id} value={x.id}>
-                          {x.name}
-                        </option>
-                      ))}
-                    </NativeSelect>
-                    <Input
-                      aria-label="함량"
-                      type="number"
-                      inputMode="decimal"
-                      min={0}
-                      placeholder="함량"
-                      value={ing.amount || ""}
-                      onChange={(e) => updateIngredient(s.id, iIdx, { amount: Number(e.target.value) })}
-                    />
-                    <NativeSelect
-                      aria-label="단위"
-                      value={ing.unit}
-                      disabled={!n}
-                      onChange={(e) => updateIngredient(s.id, iIdx, { unit: e.target.value })}
-                    >
-                      {n ? n.units.map((u) => <option key={u.label}>{u.label}</option>) : <option value="">단위</option>}
-                    </NativeSelect>
+          <div className="space-y-3">
+            {supplements.map((s, sIdx) => (
+              <div key={s.id} className="rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(20,32,29,0.04)] sm:p-5">
+                <div className="flex items-center gap-3">
+                  <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", CAPSULE[sIdx % CAPSULE.length])}>
+                    <Pill className="size-5" aria-hidden />
+                  </span>
+                  <Input
+                    aria-label={`영양제 ${sIdx + 1} 이름`}
+                    placeholder={`영양제 ${sIdx + 1} 이름 (예: 종합비타민)`}
+                    value={s.name}
+                    onChange={(e) => updateSupplement(s.id, { name: e.target.value })}
+                    className="h-11 rounded-xl border-transparent bg-muted/60 font-semibold focus-visible:bg-white"
+                  />
+                  {supplements.length > 1 && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label="성분 삭제"
-                      disabled={s.ingredients.length === 1}
-                      onClick={() =>
-                        updateSupplement(s.id, { ingredients: s.ingredients.filter((_, i) => i !== iIdx) })
-                      }
+                      className="shrink-0 rounded-full text-muted-foreground"
+                      aria-label={`영양제 ${sIdx + 1} 삭제`}
+                      onClick={() => setSupplements((list) => list.filter((x) => x.id !== s.id))}
                     >
-                      <X />
+                      <Trash2 />
                     </Button>
-                  </div>
-                );
-              })}
+                  )}
+                </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => updateSupplement(s.id, { ingredients: [...s.ingredients, emptyIngredient()] })}
-              >
-                <Plus /> 성분 추가
+                <div className="mt-3 space-y-2">
+                  {s.ingredients.map((ing, iIdx) => {
+                    const n = NUTRIENT_MAP[ing.nutrientId];
+                    return (
+                      <div
+                        key={iIdx}
+                        className="grid grid-cols-[1fr_1fr_36px] gap-2 rounded-xl bg-muted/40 p-2 sm:grid-cols-[1fr_120px_110px_36px] sm:bg-transparent sm:p-0"
+                      >
+                        <NativeSelect
+                          className="col-span-3 h-11 rounded-xl bg-white sm:col-span-1"
+                          aria-label="성분"
+                          value={ing.nutrientId}
+                          onChange={(e) => {
+                            const next = NUTRIENT_MAP[e.target.value];
+                            updateIngredient(s.id, iIdx, { nutrientId: e.target.value, unit: next?.units[0].label ?? "" });
+                          }}
+                        >
+                          <option value="">성분 선택</option>
+                          {NUTRIENTS.map((x) => (
+                            <option key={x.id} value={x.id}>
+                              {x.name}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                        <Input
+                          className="h-11 rounded-xl bg-white"
+                          aria-label="함량"
+                          type="number"
+                          inputMode="decimal"
+                          min={0}
+                          placeholder="함량"
+                          value={ing.amount || ""}
+                          onChange={(e) => updateIngredient(s.id, iIdx, { amount: Number(e.target.value) })}
+                        />
+                        <NativeSelect
+                          className="h-11 rounded-xl bg-white"
+                          aria-label="단위"
+                          value={ing.unit}
+                          disabled={!n}
+                          onChange={(e) => updateIngredient(s.id, iIdx, { unit: e.target.value })}
+                        >
+                          {n ? n.units.map((u) => <option key={u.label}>{u.label}</option>) : <option value="">단위</option>}
+                        </NativeSelect>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-11 rounded-full text-muted-foreground"
+                          aria-label="성분 삭제"
+                          disabled={s.ingredients.length === 1}
+                          onClick={() => updateSupplement(s.id, { ingredients: s.ingredients.filter((_, i) => i !== iIdx) })}
+                        >
+                          <X />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full px-1 text-sm font-semibold text-primary hover:underline"
+                  onClick={() => updateSupplement(s.id, { ingredients: [...s.ingredients, emptyIngredient()] })}
+                >
+                  <Plus className="size-4" aria-hidden /> 성분 추가
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/25 py-4 text-sm font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-white/60"
+              onClick={() => {
+                setSupplements((list) => [...list, emptySupplement()]);
+                track("supplement_added", { count: supplements.length + 1 });
+              }}
+            >
+              <Plus className="size-4" aria-hidden /> 영양제 추가
+            </button>
+          </div>
+        </Section>
+
+        {/* 결과 */}
+        {shown && (
+          <section ref={resultRef} className="mt-14 scroll-mt-6" aria-labelledby="result-title">
+            <div className="mb-5 flex items-end justify-between gap-3">
+              <div>
+                <span className="text-xs font-semibold tracking-wider text-primary">RESULT</span>
+                <h2 id="result-title" className="mt-1 text-2xl font-bold tracking-tight">
+                  내 영양제 조합 결과
+                </h2>
+              </div>
+              <Button variant="outline" size="sm" className="rounded-full bg-white" onClick={share}>
+                <Copy /> {copied ? "복사했어요" : "결과 링크 복사"}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+            <Summary rows={results} />
+            <div className="mt-4 space-y-3">
+              {results.length === 0 ? (
+                <p className="text-sm text-muted-foreground">성분과 함량을 넣으면 여기에 결과가 나와요.</p>
+              ) : (
+                results.map((r) => <ResultItem key={r.nutrientId} row={r} />)
+              )}
+            </div>
+          </section>
+        )}
+
+        <Notice />
+      </div>
+
+      {/* 하단 고정 버튼 */}
+      <div className="fixed inset-x-0 bottom-0 z-10 bg-gradient-to-t from-background via-background/90 to-transparent px-4 pb-5 pt-8">
+        <div className="mx-auto max-w-3xl">
+          <Button
+            size="lg"
+            className="h-14 w-full rounded-2xl bg-gradient-to-r from-emerald-800 to-teal-700 text-base shadow-lg shadow-emerald-900/15"
+            disabled={filledCount === 0}
+            onClick={showResult}
+          >
+            {filledCount === 0 ? "성분을 넣으면 결과를 볼 수 있어요" : `영양제 ${filledCount}개 결과 보기`}
+            {filledCount > 0 && <ArrowRight className="size-5" aria-hidden />}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Section({
+  step,
+  title,
+  desc,
+  action,
+  children,
+}: {
+  step: number;
+  title: string;
+  desc: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="glass mb-5 rounded-3xl border border-white/70 p-5 shadow-[0_8px_30px_rgba(20,32,29,0.06)] sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex gap-3">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+            {step}
+          </span>
+          <div>
+            <h2 className="text-base font-bold sm:text-lg">{title}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">{desc}</p>
+          </div>
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Segmented({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="text-sm">
+      <span className="mb-1.5 block font-medium text-muted-foreground" id={`seg-${label}`}>
+        {label}
+      </span>
+      <div role="radiogroup" aria-labelledby={`seg-${label}`} className="grid h-11 grid-cols-2 rounded-xl bg-muted p-1">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={value === o.value}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              "rounded-lg text-sm font-semibold transition-all",
+              value === o.value ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {o.label}
+          </button>
         ))}
       </div>
-
-      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-        <Button
-          variant="outline"
-          className="sm:flex-1"
-          onClick={() => {
-            setSupplements((list) => [...list, emptySupplement()]);
-            track("supplement_added", { count: supplements.length + 1 });
-          }}
-        >
-          <Plus /> 영양제 추가
-        </Button>
-        <Button size="lg" className="sm:flex-1" disabled={filledCount === 0} onClick={showResult}>
-          결과 보기
-        </Button>
-      </div>
-
-      {/* 3. 결과 */}
-      {shown && (
-        <section ref={resultRef} className="mt-12 scroll-mt-6" aria-labelledby="result-title">
-          <div className="mb-4 flex items-end justify-between gap-3">
-            <h2 id="result-title" className="text-xl font-bold">
-              결과
-            </h2>
-            <Button variant="outline" size="sm" onClick={share}>
-              <Copy /> {copied ? "링크를 복사했어요" : "결과 링크 복사"}
-            </Button>
-          </div>
-          <Summary rows={results} />
-          <div className="mt-4 space-y-3">
-            {results.length === 0 ? (
-              <p className="text-sm text-muted-foreground">성분과 함량을 넣으면 여기에 결과가 나와요.</p>
-            ) : (
-              results.map((r) => <ResultItem key={r.nutrientId} row={r} />)
-            )}
-          </div>
-          <Notice />
-        </section>
-      )}
-
-      {!shown && <Notice />}
     </div>
   );
 }
@@ -279,18 +405,22 @@ function Summary({ rows }: { rows: ResultRow[] }) {
   const near = rows.filter((r) => r.status === "near").length;
   const overlap = rows.filter((r) => r.sources.length > 1).length;
   const items = [
-    { label: "상한 넘음", value: over, icon: AlertTriangle, tone: "text-red-700" },
-    { label: "상한에 가까움", value: near, icon: TrendingUp, tone: "text-amber-700" },
-    { label: "겹치는 성분", value: overlap, icon: Layers, tone: "text-indigo-700" },
+    { label: "상한 넘음", value: over, icon: AlertTriangle, tone: "from-red-50 to-white text-red-700", dot: "bg-red-100" },
+    { label: "상한 근접", value: near, icon: TrendingUp, tone: "from-amber-50 to-white text-amber-700", dot: "bg-amber-100" },
+    { label: "겹치는 성분", value: overlap, icon: Layers, tone: "from-indigo-50 to-white text-indigo-700", dot: "bg-indigo-100" },
   ];
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {items.map(({ label, value, icon: Icon, tone }) => (
-        <div key={label} className="rounded-xl border bg-card p-3 sm:p-4">
-          <div className={cn("flex items-center gap-1.5 text-xs font-semibold sm:text-sm", tone)}>
-            <Icon className="size-4" aria-hidden /> {label}
-          </div>
-          <p className="mt-1 text-2xl font-bold">{value}개</p>
+    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      {items.map(({ label, value, icon: Icon, tone, dot }) => (
+        <div key={label} className={cn("rounded-2xl border border-white bg-gradient-to-b p-3 shadow-sm sm:p-4", tone)}>
+          <span className={cn("flex size-8 items-center justify-center rounded-full", dot)}>
+            <Icon className="size-4" aria-hidden />
+          </span>
+          <p className="mt-2 text-xs font-semibold sm:text-sm">{label}</p>
+          <p className="text-2xl font-bold text-foreground sm:text-3xl">
+            {value}
+            <span className="ml-0.5 text-sm font-semibold text-muted-foreground">개</span>
+          </p>
         </div>
       ))}
     </div>
@@ -298,70 +428,89 @@ function Summary({ rows }: { rows: ResultRow[] }) {
 }
 
 const STATUS = {
-  over: { text: "상한섭취량을 넘어요", variant: "over", icon: AlertTriangle, bar: "bg-red-600" },
-  near: { text: "상한섭취량에 가까워요", variant: "near", icon: TrendingUp, bar: "bg-amber-500" },
-  ok: { text: "상한섭취량 안쪽이에요", variant: "ok", icon: CheckCircle2, bar: "bg-emerald-600" },
-  none: { text: "상한섭취량이 정해지지 않은 성분", variant: "info", icon: Info, bar: "bg-slate-400" },
+  over: { text: "상한섭취량을 넘어요", chip: "bg-red-100 text-red-800", ring: "#dc2626", icon: AlertTriangle },
+  near: { text: "상한섭취량에 가까워요", chip: "bg-amber-100 text-amber-900", ring: "#d97706", icon: TrendingUp },
+  ok: { text: "상한섭취량 안쪽이에요", chip: "bg-emerald-100 text-emerald-800", ring: "#059669", icon: CheckCircle2 },
+  none: { text: "상한섭취량 기준이 없는 성분", chip: "bg-slate-100 text-slate-700", ring: "#94a3b8", icon: Info },
 } as const;
+
+function Gauge({ pct, color }: { pct?: number; color: string }) {
+  const r = 26;
+  const c = 2 * Math.PI * r;
+  const shown = pct === undefined ? 0 : Math.min(pct, 100);
+  return (
+    <div className="relative size-16 shrink-0" aria-hidden>
+      <svg viewBox="0 0 64 64" className="size-16 -rotate-90">
+        <circle cx="32" cy="32" r={r} fill="none" stroke="#ecebe5" strokeWidth="7" />
+        {pct !== undefined && (
+          <circle
+            cx="32"
+            cy="32"
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={`${(shown / 100) * c} ${c}`}
+          />
+        )}
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[13px] font-bold">
+        {pct === undefined ? "–" : `${pct}%`}
+      </span>
+    </div>
+  );
+}
 
 function ResultItem({ row }: { row: ResultRow }) {
   const st = STATUS[row.status];
   const Icon = st.icon;
   const pct = row.ratio !== undefined ? Math.round(row.ratio * 100) : undefined;
   return (
-    <Card>
-      <CardContent className="pt-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="mr-1 text-base font-semibold">{row.name}</h3>
-          <Badge variant={st.variant}>
-            <Icon aria-hidden /> {st.text}
-          </Badge>
+    <article className="flex gap-4 rounded-2xl border bg-white p-4 shadow-[0_1px_2px_rgba(20,32,29,0.04)] sm:p-5">
+      <Gauge pct={pct} color={st.ring} />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <h3 className="mr-1 text-base font-bold">{row.name}</h3>
+          <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold", st.chip)}>
+            <Icon className="size-3.5" aria-hidden /> {st.text}
+          </span>
           {row.sources.length > 1 && (
-            <Badge variant="overlap">
-              <Layers aria-hidden /> {row.sources.length}개 제품에 겹침
-            </Badge>
+            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-800">
+              <Layers className="size-3.5" aria-hidden /> {row.sources.length}개 제품에 겹침
+            </span>
           )}
         </div>
-
-        <p className="mt-2 text-sm">
+        <p className="mt-1.5 text-sm">
           합계 <b>{fmt(row.total)} {row.baseUnit}</b>
           {row.ul !== undefined && (
-            <>
+            <span className="text-muted-foreground">
               {" "}
-              / 상한 {fmt(row.ul)} {row.baseUnit} <span className="text-muted-foreground">({pct}%)</span>
-            </>
+              / 상한 {fmt(row.ul)} {row.baseUnit}
+            </span>
           )}
+          {pct !== undefined && <span className="sr-only"> (상한 대비 {pct}%)</span>}
         </p>
-
-        {pct !== undefined && (
-          <div
-            className="relative mt-2 h-2 overflow-hidden rounded-full bg-muted"
-            role="meter"
-            aria-label={`${row.name} 상한섭취량 대비`}
-            aria-valuemin={0}
-            aria-valuemax={150}
-            aria-valuenow={Math.min(pct, 150)}
-          >
-            <div className={cn("h-full rounded-full", st.bar)} style={{ width: `${Math.min(pct, 150) / 1.5}%` }} />
-            {/* 100% 위치 표시 */}
-            <div className="absolute inset-y-0 w-0.5 bg-foreground/60" style={{ left: `${100 / 1.5}%` }} aria-hidden />
-          </div>
-        )}
-
-        <p className="mt-2 text-xs text-muted-foreground">
-          들어 있는 제품: {row.sources.join(", ")}
-          {row.ulNote ? ` · ${row.ulNote}` : ""}
-        </p>
-      </CardContent>
-    </Card>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {row.sources.map((src) => (
+            <span key={src} className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {src}
+            </span>
+          ))}
+        </div>
+        {row.ulNote && <p className="mt-1.5 text-xs text-muted-foreground">{row.ulNote}</p>}
+      </div>
+    </article>
   );
 }
 
 function Notice() {
   return (
-    <aside className="mt-8 rounded-xl bg-muted p-4 text-xs leading-relaxed text-muted-foreground">
-      <p className="font-semibold text-foreground">꼭 읽어 주세요</p>
-      <ul className="mt-1.5 list-disc space-y-1 pl-4">
+    <aside className="mt-10 rounded-2xl border border-white/70 bg-white/60 p-5 text-xs leading-relaxed text-muted-foreground">
+      <p className="flex items-center gap-1.5 font-semibold text-foreground">
+        <Info className="size-4" aria-hidden /> 꼭 읽어 주세요
+      </p>
+      <ul className="mt-2 list-disc space-y-1 pl-4">
         <li>입력한 함량과 공개된 섭취기준을 더해 본 참고용 계산이며, 의학적 조언이 아니에요.</li>
         <li>임신·수유 중이거나 복용 중인 약이 있다면 의사·약사와 상담하세요. 65세 이상은 아직 지원하지 않아요.</li>
         <li>음식으로 먹는 양은 포함하지 않아요. &lsquo;상한에 가까움&rsquo;은 상한의 {Math.round(NEAR_RATIO * 100)}% 이상일 때 표시해요.</li>

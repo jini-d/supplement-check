@@ -2,21 +2,21 @@
 
 /* shadcn/ui 기본 토큰과 같은 이름을 써서, 나중에 shadcn 컴포넌트를 추가해도 그대로 맞도록 함 */
 :root {
-  --background: #ffffff;
-  --foreground: #16181d;
+  --background: #f7f6f2;
+  --foreground: #14201d;
   --card: #ffffff;
-  --card-foreground: #16181d;
-  --primary: #1f3a68;
+  --card-foreground: #14201d;
+  --primary: #0f5c4d;
   --primary-foreground: #ffffff;
-  --secondary: #eef1f6;
-  --secondary-foreground: #1f2937;
-  --muted: #f3f4f6;
-  --muted-foreground: #5e6572;
-  --accent: #eef1f6;
-  --accent-foreground: #16181d;
-  --border: #e2e5ea;
-  --input: #d5d9e0;
-  --ring: #1f3a68;
+  --secondary: #e7f0ec;
+  --secondary-foreground: #14201d;
+  --muted: #eeede7;
+  --muted-foreground: #5c6662;
+  --accent: #e7f0ec;
+  --accent-foreground: #14201d;
+  --border: #e4e2da;
+  --input: #d9d6cc;
+  --ring: #0f5c4d;
 }
 
 @theme inline {
@@ -47,4 +47,16 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   word-break: keep-all;
+}
+
+.bg-blob {
+  background:
+    radial-gradient(40rem 28rem at 85% -5%, rgba(255, 196, 160, 0.45), transparent 60%),
+    radial-gradient(36rem 26rem at -10% 10%, rgba(140, 214, 190, 0.45), transparent 60%),
+    radial-gradient(30rem 30rem at 50% 110%, rgba(196, 220, 255, 0.35), transparent 60%);
+}
+.glass {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
